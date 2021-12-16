@@ -1,9 +1,10 @@
-const { BrowserWindow, screen } = require('electron');
+const { BrowserWindow, screen, app } = require('electron');
 
 const appSettings = require('./appSettings');
 const buildInfo = require('./utils/buildInfo');
 const splashScreen = require('./splashScreen');
 const securityUtils = require('./utils/securityUtils');
+const systemTray = require('./systemTray');
 
 const settings = appSettings.getSettings();
 
@@ -144,14 +145,51 @@ exports.makeWindow = (isVisible = false) => {
     });
   });
 
+  systemTray.init({
+    onCheckForUpdates: () => {
+      const updater = _updater.default === null || _updater.default === void 0 ? void 0 : _updater.default.getUpdater();
+
+      if (updater != null) {
+        checkForUpdatesWithUpdater(updater);
+      } else {
+        legacyModuleUpdater.checkForUpdates();
+      }
+    },
+
+    onTrayClicked: () => setWindowVisible(true, true),
+
+    onOpenVoiceSettings: () => {}, // Stubs because no DiscordNative
+    onToggleMute: () => {},
+    onToggleDeafen: () => {},
+    onLaunchApplication: () => {}
+  });
+
+  if (process.platform === 'linux' || process.platform === 'win32') {
+    systemTray.show();
+
+    mainWindow.on('close', e => {
+      if (mainWindow === null) { // Killed
+        popoutWindows.closePopouts();
+        return;
+      }
+
+      // saveWindowConfig(mainWindow); // Quit app if that's the setting
+
+      if (!settings.get('MINIMIZE_TO_TRAY', true)) return app.quit(); // Quit if disabled to minimize to tray, else minimize
+
+      setWindowVisible(false);
+      e.preventDefault();
+    });
+  }
+
   mainWindow.loadURL(URL_TO_LOAD);
 };
 
-exports.setVisible = (visible) => {
+const setWindowVisible = (visible, unmin = false) => {
   if (!mainWindow) return;
 
   if (visible) {
-    if (!mainWindow.isMinimized()) {
+    if (unmin || !mainWindow.isMinimized()) {
       mainWindow.show();
     }
   } else {
@@ -160,3 +198,5 @@ exports.setVisible = (visible) => {
 
   mainWindow.setSkipTaskbar(!visible);
 };
+
+exports.setVisible = (visible) => setWindowVisible(visible);

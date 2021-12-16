@@ -7,6 +7,9 @@ exports.startup = (bootstrap) => {
     return;
   }
 
+  Constants = require('./Constants');
+  Constants.init(bootstrap.Constants);
+
   bootstrapModules.init(bootstrap);
 
   mainScreen = require('./mainScreen');

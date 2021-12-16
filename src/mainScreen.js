@@ -1,6 +1,7 @@
 const { BrowserWindow, screen } = require('electron');
 
 const appSettings = require('./appSettings');
+const buildInfo = require('./utils/buildInfo');
 const splashScreen = require('./splashScreen');
 const securityUtils = require('./utils/securityUtils');
 
@@ -9,8 +10,8 @@ const settings = appSettings.getSettings();
 let mainWindow, mainWindowId;
 
 
-const MIN_WIDTH = 940;
-const MIN_HEIGHT = 500;
+const MIN_WIDTH = settings.get('MIN_WIDTH', 940);
+const MIN_HEIGHT = settings.get('MIN_HEIGHT', 500);
 const MIN_VISIBLE_ON_SCREEN = 32;
 const DEFAULT_WIDTH = 1280;
 const DEFAULT_HEIGHT = 720;
@@ -37,8 +38,26 @@ function doAABBsOverlap(a, b) { // Copied from Discord because a
   return false;
 }
 
+const genEndpoint = () => {
+  const fromConfig = process.env.DISCORD_WEBAPP_ENDPOINT || settings.get('WEBAPP_ENDPOINT');
+  if (fromConfig) return fromConfig;
 
-const WEBAPP_ENDPOINT = 'https://canary.discord.com/app';
+  switch (buildInfo.releaseChannel) {
+    case 'stable':
+      return 'https://discord.com';
+
+    case 'development':
+      return 'https://canary.discord.com';
+
+    default:
+      return 'https://' + buildInfo.releaseChannel + '.discord.com';
+  }
+};
+
+const WEBAPP_ENDPOINT = genEndpoint();
+const WEBAPP_PATH = settings.get('WEBAPP_PATH', `/app?_=${Date.now()}`);
+const URL_TO_LOAD = `${WEBAPP_ENDPOINT}${WEBAPP_PATH}`;
+
 exports.makeWindow = (isVisible = false) => {
   const windowOptions = {
     title: 'Discord',
@@ -125,7 +144,7 @@ exports.makeWindow = (isVisible = false) => {
     });
   });
 
-  mainWindow.loadURL(WEBAPP_ENDPOINT);
+  mainWindow.loadURL(URL_TO_LOAD);
 };
 
 exports.setVisible = (visible) => {

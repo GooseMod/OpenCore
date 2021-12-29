@@ -5,6 +5,7 @@ const buildInfo = require('./utils/buildInfo');
 const splashScreen = require('./splashScreen');
 const securityUtils = require('./utils/securityUtils');
 const systemTray = require('./systemTray');
+const appBadge = require('./appBadge');
 
 const settings = appSettings.getSettings();
 
@@ -163,6 +164,8 @@ exports.makeWindow = (isVisible = false) => {
     onToggleDeafen: () => {},
     onLaunchApplication: () => {}
   });
+
+  appBadge.init();
 
   if (process.platform === 'linux' || process.platform === 'win32') {
     systemTray.show();

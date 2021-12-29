@@ -35,11 +35,10 @@ let options, atomTray;
 exports.init = (_options) => {
   options = _options;
 
-  const resourcePath = `images/systemtray/${process.platform}`;
-  const suffix = process.platform === 'darwin' ? 'Template' : '';
+  const resourcePath = `images/systemtray`;
   
   for (const key of Object.keys(TrayIconNames)) {
-    trayIcons[key] = utils.exposeModuleResource(resourcePath, `${TrayIconNames[key]}${suffix}.png`);
+    trayIcons[key] = utils.exposeModuleResource(resourcePath, `${TrayIconNames[key]}.png`);
   }
 
   currentIcon = trayIcons.DEFAULT;
